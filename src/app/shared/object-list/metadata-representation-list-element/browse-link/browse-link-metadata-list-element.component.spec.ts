@@ -67,6 +67,12 @@ describe('BrowseLinkMetadataListElementComponent', () => {
       expect(comp.isLink()).toBe(false);
     });
 
+    it('should open the browse link in the same tab (no target attribute)', () => {
+      const anchor: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('a');
+      expect(anchor).not.toBeNull();
+      expect(anchor.getAttribute('target')).toBeNull();
+    });
+
     it('should set lang attribute when language is provided', () => {
       (comp.mdRepresentation as any).language = 'en';
       fixture.detectChanges();
