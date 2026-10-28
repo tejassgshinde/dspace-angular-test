@@ -158,6 +158,50 @@ describe('ThumbnailComponent', () => {
 
     });
 
+    describe('maximum height', () => {
+      const getImg = (): HTMLElement => fixture.debugElement.query(By.css('img.thumbnail-content')).nativeElement;
+
+      beforeEach(() => {
+        // The global theme stylesheet (with the :root variables) is not injected in Karma
+        document.documentElement.style.setProperty('--ds-thumbnail-max-height', '100px');
+        comp.src.set('https://bit.stream');
+        comp.isLoading.set(false);
+      });
+
+      afterEach(() => {
+        document.documentElement.style.removeProperty('--ds-thumbnail-max-height');
+      });
+
+      it('should cap the image height when limitWidth is true', () => {
+        comp.limitWidth = true;
+        fixture.detectChanges();
+        expect(getComputedStyle(getImg()).maxHeight).toBe('100px');
+      });
+
+      it('should not cap the image height when limitWidth is false', () => {
+        comp.limitWidth = false;
+        fixture.detectChanges();
+        expect(getComputedStyle(getImg()).maxHeight).toBe('none');
+      });
+
+      it('should not set an explicit width, height or object-fit on the image', () => {
+        comp.limitWidth = true;
+        fixture.detectChanges();
+        const img = getImg();
+        expect(img.style.width).toBe('');
+        expect(img.style.height).toBe('');
+        expect(getComputedStyle(img).objectFit).toBe('fill');
+      });
+
+      it('should not cap the height of the placeholder box', () => {
+        comp.limitWidth = true;
+        comp.src.set(null);
+        fixture.detectChanges();
+        const outer = fixture.debugElement.query(By.css('.outer')).nativeElement;
+        expect(getComputedStyle(outer).maxHeight).toBe('none');
+      });
+    });
+
     const errorHandler = () => {
       let setSrcSpy;
 

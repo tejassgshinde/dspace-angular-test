@@ -37,3 +37,7 @@ img {
     }
   }
 }
+
+.limit-width img {
+  max-height: var(--ds-thumbnail-max-height);
+}
