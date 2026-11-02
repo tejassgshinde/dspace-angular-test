@@ -5,7 +5,10 @@ import {
   RouterStateSnapshot,
 } from '@angular/router';
 import { hasValue } from '@dspace/shared/utils/empty.util';
-import { Observable } from 'rxjs';
+import {
+  Observable,
+  of,
+} from 'rxjs';
 
 import { CommunityDataService } from '../data/community-data.service';
 import {
@@ -31,22 +34,27 @@ export const communityBreadcrumbResolver: ResolveFn<BreadcrumbConfig<Community>>
   dataService: CommunityDataService = inject(CommunityDataService),
 ): Observable<BreadcrumbConfig<Community>> => {
   const linksToFollow: FollowLinkConfig<DSpaceObject>[] = COMMUNITY_PAGE_LINKS_TO_FOLLOW as FollowLinkConfig<DSpaceObject>[];
-  if (hasValue(route.data.breadcrumbQueryParam) && hasValue(route.queryParams[route.data.breadcrumbQueryParam])) {
-    return DSOBreadcrumbResolverByUuid(
-      route,
-      state,
-      route.queryParams[route.data.breadcrumbQueryParam],
-      breadcrumbService,
-      dataService,
-      ...linksToFollow,
-    ) as Observable<BreadcrumbConfig<Community>>;
-  } else {
-    return DSOBreadcrumbResolver(
-      route,
-      state,
-      breadcrumbService,
-      dataService,
-      ...linksToFollow,
-    ) as Observable<BreadcrumbConfig<Community>>;
+  if (hasValue(route.data.breadcrumbQueryParam)) {
+    const parentUuid = route.queryParams[route.data.breadcrumbQueryParam];
+    if (hasValue(parentUuid)) {
+      return DSOBreadcrumbResolverByUuid(
+        route,
+        state,
+        parentUuid,
+        breadcrumbService,
+        dataService,
+        ...linksToFollow,
+      ) as Observable<BreadcrumbConfig<Community>>;
+    }
+    // A query parameter is configured, but no parent was given (e.g. creating a top-level community):
+    // there is nothing to look up, so skip the breadcrumb instead of requesting a community with id 'undefined'
+    return of(undefined);
   }
+  return DSOBreadcrumbResolver(
+    route,
+    state,
+    breadcrumbService,
+    dataService,
+    ...linksToFollow,
+  ) as Observable<BreadcrumbConfig<Community>>;
 };
