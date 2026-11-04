@@ -5,9 +5,10 @@
         class="form-select"
         autocomplete="off"
         required
+        name="script"
+        [readonly]="true"
         [ngModel]="selectedScript"
         placeholder="{{'process.new.select-script.placeholder' | translate}}"
-        [ngModelOptions]="{standalone: true}"
         ngbDropdownToggle
         role="combobox"
         #script="ngModel">

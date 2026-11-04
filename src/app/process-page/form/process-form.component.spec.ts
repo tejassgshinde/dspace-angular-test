@@ -4,7 +4,11 @@ import {
   TestBed,
   waitForAsync,
 } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormsModule,
+  Validators,
+} from '@angular/forms';
 import {
   ActivatedRoute,
   Router,
@@ -108,6 +112,38 @@ describe('ProcessFormComponent', () => {
   it('should call invoke on the scriptService on submit', () => {
     component.submitForm({ controls: {} } as any);
     expect(scriptService.invoke).toHaveBeenCalled();
+  });
+
+  describe('when no script is selected', () => {
+    let notificationsService: NotificationsService;
+    let routerMock: Router;
+
+    beforeEach(() => {
+      notificationsService = TestBed.inject(NotificationsService);
+      routerMock = TestBed.inject(Router);
+      component.selectedScript = undefined;
+    });
+
+    it('should return early without throwing, invoking, notifying or navigating', () => {
+      expect(() => component.submitForm({ controls: {} } as any)).not.toThrow();
+      expect(scriptService.invoke).not.toHaveBeenCalled();
+      expect(notificationsService.success).not.toHaveBeenCalled();
+      expect(notificationsService.error).not.toHaveBeenCalled();
+      expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should mark an invalid script control as dirty and not invoke the script', () => {
+      const scriptControl = new FormControl('', Validators.required);
+      spyOn(scriptControl, 'markAsDirty').and.callThrough();
+
+      expect(() => component.submitForm({ controls: { script: scriptControl } } as any)).not.toThrow();
+
+      expect(scriptControl.markAsDirty).toHaveBeenCalled();
+      expect(scriptService.invoke).not.toHaveBeenCalled();
+      expect(notificationsService.success).not.toHaveBeenCalled();
+      expect(notificationsService.error).not.toHaveBeenCalled();
+      expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
   });
 
   describe('when undefined parameters are provided', () => {
