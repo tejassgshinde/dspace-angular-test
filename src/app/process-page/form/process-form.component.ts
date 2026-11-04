@@ -98,7 +98,7 @@ export class ProcessFormComponent implements OnInit {
     if (isEmpty(this.parameters)) {
       this.parameters = [];
     }
-    if (!this.validateForm(form) || this.isRequiredMissing()) {
+    if (!this.validateForm(form) || !this.selectedScript || this.isRequiredMissing()) {
       return;
     }
 

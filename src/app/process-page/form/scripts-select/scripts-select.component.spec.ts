@@ -6,7 +6,10 @@ import {
   tick,
   waitForAsync,
 } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import {
+  FormsModule,
+  NgModel,
+} from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import {
   ActivatedRoute,
@@ -109,6 +112,78 @@ describe('ScriptsSelectComponent', () => {
     const validationError = fixture.debugElement.query(By.css('.validation-error'));
     expect(validationError).toBeFalsy();
   }));
+
+  describe('script control validation', () => {
+    function getScriptControl() {
+      return fixture.debugElement.query(By.css('#process-script')).injector.get(NgModel);
+    }
+
+    it('should have a required error on the control while no script is selected', fakeAsync(() => {
+      (component as any)._selectedScript = undefined;
+      fixture.detectChanges();
+      tick();
+
+      const ngModel = getScriptControl();
+      expect(ngModel.name).toBe('script');
+      expect(ngModel.control.errors?.required).toBeTruthy();
+    }));
+
+    it('should show the validation error once the empty control is marked dirty', fakeAsync(() => {
+      (component as any)._selectedScript = undefined;
+      fixture.detectChanges();
+      tick();
+
+      getScriptControl().control.markAsDirty();
+      fixture.detectChanges();
+
+      const validationError = fixture.debugElement.query(By.css('.validation-error'));
+      expect(validationError).toBeTruthy();
+      expect(validationError.nativeElement.textContent).toContain('process.new.select-script.required');
+    }));
+
+    it('should have an empty required-invalid field when the script query parameter matches no script', fakeAsync(() => {
+      const route = TestBed.inject(ActivatedRoute);
+      spyOnProperty(route, 'snapshot', 'get').and.returnValue({ queryParams: { script: 'unknown-script-id' } } as any);
+      spyOn(component.select, 'emit');
+
+      component.loadScripts();
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const input = fixture.debugElement.query(By.css('#process-script')).nativeElement;
+      expect(input.value).toBe('');
+      expect(getScriptControl().control.errors?.required).toBeTruthy();
+      expect(component.select.emit).toHaveBeenCalledWith(undefined);
+    }));
+
+    it('should render the input as read-only', () => {
+      const input = fixture.debugElement.query(By.css('#process-script')).nativeElement;
+      expect(input.readOnly).toBeTrue();
+      expect(input.hasAttribute('readonly')).toBeTrue();
+    });
+
+    it('should make the control valid and show no validation error after a script is picked', fakeAsync(() => {
+      const picked = new Script();
+      picked.id = 'picked-script';
+      picked.name = 'picked-script-name';
+      spyOn(component.select, 'emit');
+
+      component.onSelect(picked);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const ngModel = getScriptControl();
+      ngModel.control.markAsDirty();
+      ngModel.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.select.emit).toHaveBeenCalledWith(picked);
+      expect(ngModel.control.valid).toBeTrue();
+      expect(fixture.debugElement.query(By.css('.validation-error'))).toBeFalsy();
+    }));
+  });
 
   it('should load more scripts when scrolled to the bottom', fakeAsync(() => {
     spyOn(component, 'loadScripts');
